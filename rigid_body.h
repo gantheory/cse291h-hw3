@@ -11,7 +11,7 @@ class RigidBody {
   const float kTimestep = 0.00005;  // s
   const float kMiuS = 1.5f;
   const float kMiuD = 1.0f;
-  const float kEpsilon = .75f;  // 0.25 [0, 1], 0.1
+  const float kEpsilon = 0.80f;  // 0.25 [0, 1], 0.1
   const float kBuss = false;
 
   const glm::mat4 kModel = glm::mat4(1.0f);
@@ -56,8 +56,10 @@ class RigidBody {
 
   float GetL2Norm(glm::vec3& v);
 
+  glm::vec3 GetImpulse(glm::vec3 point);
+
  public:
-  RigidBody(float a, float b, float c);
+  RigidBody(float a, float b, float c, glm::vec3 initAngularVelocity);
 
   ~RigidBody();
 

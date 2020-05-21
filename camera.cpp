@@ -29,7 +29,7 @@ void Camera::Reset() {
   NearClip = 0.1f;
   FarClip = 100.0f;
 
-  Distance = 25.0f;
+  Distance = 40.0f;
   Azimuth = -45.0f;
   Incline = 25.0f;
 }

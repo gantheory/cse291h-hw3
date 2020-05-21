@@ -10,25 +10,18 @@
 
 #define PI 3.1415926f
 
-RigidBody::RigidBody(float a, float b, float c) {
+RigidBody::RigidBody(float a, float b, float c, glm::vec3 initAngularVelocity) {
   mass = kDensity * a * b * c;
-  std::cerr << mass << std::endl;
   principalInertia.x = mass / 12.f * (b * b + c * c);
   principalInertia.y = mass / 12.f * (a * a + c * c);
   principalInertia.z = mass / 12.f * (a * a + b * b);
   inverseTheta0 = glm::diagonal3x3(1.f / principalInertia);
-  std::cerr << "inverse theta0: " << to_string(inverseTheta0) << std::endl;
-  // inverseTheta0 = glm::mat3(glm::vec3(1.f / principalInertia.x, 0, 0),
-  //                           glm::vec3(0, 1.f / principalInertia.y, 0),
-  //                           glm::vec3(0, 0, 1.f / principalInertia.z));
 
   position = glm::vec3(0.f);
-  momentum = glm::vec3(0.f);
+  momentum = glm::vec3(0.f, mass * 100.f, 0.f);
+
   orientation = glm::mat3(1.f);
-  angularMomentum = glm::vec3(0.f);
-  angularMomentum = glm::vec3(10.f, 10.f, 10.f);
-  // angularMomentum = glm::vec3(2.f, 2.f, 0.f);
-  // angularMomentum = glm::vec3(2.f, 2.f, 2.f);
+  angularMomentum = glm::diagonal3x3(principalInertia) * initAngularVelocity;
 
   rigidBodyMin = -glm::vec3(a * 0.5f, b * 0.5f, c * 0.5f);
   rigidBodyMax = glm::vec3(a * 0.5f, b * 0.5f, c * 0.5f);
@@ -144,77 +137,29 @@ void RigidBody::Update() {
     ApplyForce(gravity, position);
   }
 
-  bool flag = false;
+  float minY = 1e9;
+  int idx = -1;
   // Ground collision.
-  std::vector<glm::vec3> collisionPoint;
-  for (auto& originalPoint : originalPoints) {
+  for (size_t i = 0; i < originalPoints.size(); ++i) {
+    auto& originalPoint = originalPoints[i];
     auto point = orientation * originalPoint + position;
     if (point.y <= kGround) {
-      collisionPoint.push_back(point);
+      if (point.y < minY) {
+        idx = i;
+        minY = fmin(minY, point.y);
+      }
     }
   }
-  glm::vec3 finalPoint(0.f);
-  for (auto& point : collisionPoint) {
-    finalPoint += point;
-  }
-  if (!collisionPoint.empty()) {
-    glm::vec3 point = finalPoint / (float)collisionPoint.size();
-    std::cerr << "point: " << to_string(point) << std::endl;
-    flag = true;
-    glm::vec3 r = point - position;
-    std::cerr << "r: " << to_string(r) << std::endl;
-    glm::vec3 n(0.f, 1.f, 0.f);
-    glm::vec3 vr = momentum / mass + glm::cross(GetAngularVelocity(), r);
-    std::cerr << "vr: " << to_string(vr) << std::endl;
-    glm::vec3 vNorm = vr * n;
-    std::cerr << "vNorm: " << to_string(vNorm) << std::endl;
-    glm::vec3 vTan = vr - vNorm;
-    std::cerr << "vTan: " << to_string(vTan) << std::endl;
-    glm::mat3 inverseM = GetInverseMassMatrix(r);
-    glm::vec3 vNormPrime = -kEpsilon * vNorm;
-    std::cerr << "vNormPrime: " << to_string(vNormPrime) << std::endl;
-    glm::mat3 M = glm::inverse(inverseM);
-    std::cerr << "inverse theta: " << to_string(GetInverseThetaMatrix())
-              << std::endl;
-    std::cerr << "inv M: " << to_string(inverseM) << std::endl;
-    std::cerr << "M: " << to_string(M) << std::endl;
-    glm::vec3 impulse = M * (vNormPrime - vr);
 
-    if (!IsInsideFrictionCone(impulse)) {
-      // assert(false);
-      std::cerr << "dynamic" << std::endl;
-      glm::vec3 T = vTan / GetL2Norm(vTan);
-      std::cerr << "T: " << to_string(T) << std::endl;
-      glm::vec3 den = inverseM * (n - kMiuD * T);
-      impulse = -(kEpsilon + 1) * vNorm / den.y;
-    }
+  if (minY <= kGround) {
+    glm::vec3 point = orientation * originalPoints[idx] + position;
+    glm::vec3 impulse = GetImpulse(point);
 
     glm::vec3 f = impulse / kTimestep;
     ApplyForce(f, point);
-
-    std::cerr << "impulse: " << to_string(impulse) << std::endl;
-    std::cerr << "check: " << to_string(glm::inverse(M) * impulse + vr)
-              << std::endl;
-    std::cerr << "force: " << to_string(f) << std::endl;
-    std::cerr << "delta v: " << to_string(f * kTimestep / mass) << std::endl;
-    std::cerr << "==========================================================="
-                 "====================="
-              << std::endl;
-  }
-  if (flag) {
-    std::cerr << "Before: " << to_string(momentum / mass) << std::endl;
   }
 
   Integrate(kTimestep);
-
-  if (flag) {
-    std::cerr << "After: " << to_string(momentum / mass) << std::endl;
-    std::cerr << "total force: " << to_string(force) << std::endl;
-    std::cerr << "delta v: " << to_string(force * kTimestep / mass)
-              << std::endl;
-    std::cerr << "total torque: " << to_string(torque) << std::endl;
-    // exit(0);
-  }
 }
 
 void RigidBody::ApplyForce(const glm::vec3& f, const glm::vec3& pos) {
@@ -279,11 +224,28 @@ glm::mat3 RigidBody::GetInverseMassMatrix(glm::vec3 r) {
 bool RigidBody::IsInsideFrictionCone(glm::vec3 impulse) {
   float tangent = std::sqrt(pow(impulse.x, 2) + pow(impulse.z, 2));
   float normal = std::fabs(impulse.y);
-  std::cerr << "tangent: " << tangent << std::endl;
-  std::cerr << "normal: " << normal << std::endl;
   return tangent <= kMiuS * normal;
 }
 
 float RigidBody::GetL2Norm(glm::vec3& v) {
   return std::sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+}
+
+glm::vec3 RigidBody::GetImpulse(glm::vec3 point) {
+  glm::vec3 r = point - position;
+  glm::vec3 n(0.f, 1.f, 0.f);
+  glm::vec3 vr = momentum / mass + glm::cross(GetAngularVelocity(), r);
+  glm::vec3 vNorm = vr * n;
+  glm::vec3 vTan = vr - vNorm;
+  glm::mat3 inverseM = GetInverseMassMatrix(r);
+  glm::vec3 vNormPrime = -kEpsilon * vNorm;
+  glm::mat3 M = glm::inverse(inverseM);
+  glm::vec3 impulse = M * (vNormPrime - vr);
+
+  if (!IsInsideFrictionCone(impulse)) {
+    glm::vec3 T = vTan / GetL2Norm(vTan);
+    glm::vec3 den = inverseM * (n - kMiuD * T);
+    impulse = -(kEpsilon + 1) * vNorm / den.y;
+  }
+  return impulse;
 }

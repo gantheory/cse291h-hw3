@@ -32,10 +32,11 @@ bool Window::initializeProgram() {
   return true;
 }
 
-bool Window::initializeObjects() {
+bool Window::initializeObjects(float a, float b, float c,
+                               glm::vec3 angularVelocity) {
+  if (rigidBody) delete rigidBody;
   // Create a rigidBody
-  rigidBody = new RigidBody(1.f, 1.0f, 1.f);
-
+  rigidBody = new RigidBody(a, b, c, angularVelocity);
   return true;
 }
 
@@ -156,6 +157,9 @@ void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action,
   /*
    * TODO: Modify below to add your key callbacks.
    */
+  const float sideA = 1;
+  const float sideB = 5;
+  const float w = 15;
 
   // Check for a key press.
   if (action == GLFW_PRESS) {
@@ -165,8 +169,92 @@ void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action,
         glfwSetWindowShouldClose(window, GL_TRUE);
         break;
 
+        // case GLFW_KEY_R:
+        //   resetCamera();
+        //   break;
+
+      case GLFW_KEY_Q:
+        initializeObjects(sideA, sideA, sideA, glm::vec3(w, 0.f, 0.f));
+        break;
+
+      case GLFW_KEY_W:
+        initializeObjects(sideA, sideA, sideA, glm::vec3(0.f, w, 0.f));
+        break;
+
+      case GLFW_KEY_E:
+        initializeObjects(sideA, sideA, sideA, glm::vec3(0.f, 0.f, w));
+        break;
+
       case GLFW_KEY_R:
-        resetCamera();
+        initializeObjects(sideA, sideA, sideA, glm::vec3(w, w, 0.f));
+        break;
+
+      case GLFW_KEY_T:
+        initializeObjects(sideA, sideA, sideA, glm::vec3(w, 0.f, w));
+        break;
+
+      case GLFW_KEY_Y:
+        initializeObjects(sideA, sideA, sideA, glm::vec3(0.f, w, w));
+        break;
+
+      case GLFW_KEY_U:
+        initializeObjects(sideA, sideA, sideA, glm::vec3(w, w, w));
+        break;
+
+      case GLFW_KEY_A:
+        initializeObjects(sideB, sideA, sideA, glm::vec3(w, 0.f, 0.f));
+        break;
+
+      case GLFW_KEY_S:
+        initializeObjects(sideB, sideA, sideA, glm::vec3(0.f, w, 0.f));
+        break;
+
+      case GLFW_KEY_D:
+        initializeObjects(sideB, sideA, sideA, glm::vec3(0.f, 0.f, w));
+        break;
+
+      case GLFW_KEY_F:
+        initializeObjects(sideB, sideA, sideA, glm::vec3(w, w, 0.f));
+        break;
+
+      case GLFW_KEY_G:
+        initializeObjects(sideB, sideA, sideA, glm::vec3(w, 0.f, w));
+        break;
+
+      case GLFW_KEY_H:
+        initializeObjects(sideB, sideA, sideA, glm::vec3(0.f, w, w));
+        break;
+
+      case GLFW_KEY_J:
+        initializeObjects(sideB, sideA, sideA, glm::vec3(w, w, w));
+        break;
+
+      case GLFW_KEY_Z:
+        initializeObjects(sideB, sideB, sideA, glm::vec3(w, 0.f, 0.f));
+        break;
+
+      case GLFW_KEY_X:
+        initializeObjects(sideB, sideB, sideA, glm::vec3(0.f, w, 0.f));
+        break;
+
+      case GLFW_KEY_C:
+        initializeObjects(sideB, sideB, sideA, glm::vec3(0.f, 0.f, w));
+        break;
+
+      case GLFW_KEY_V:
+        initializeObjects(sideB, sideB, sideA, glm::vec3(w, w, 0.f));
+        break;
+
+      case GLFW_KEY_B:
+        initializeObjects(sideB, sideB, sideA, glm::vec3(w, 0.f, w));
+        break;
+
+      case GLFW_KEY_N:
+        initializeObjects(sideB, sideB, sideA, glm::vec3(0.f, w, w));
+        break;
+
+      case GLFW_KEY_M:
+        initializeObjects(sideB, sideB, sideA, glm::vec3(w, w, w));
         break;
 
       default:
