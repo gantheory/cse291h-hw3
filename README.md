@@ -1,2 +1,9 @@
-# cse291h-hw3
-Rigid Body Simulation
+# cse291h-hw2
+
+## Usage
+
+```
+$ brew install glfw glm
+$ make
+$ ./hw2
+```
