@@ -8,10 +8,10 @@ class RigidBody {
   const float kGround = -10.f;
   const float kDensity = 1.f;       // g / cm^3
   const float kG = 980.f;           // cm / s^2
-  const float kTimestep = 0.00005;  // s
+  const float kTimestep = 0.00007;  // s
   const float kMiuS = 1.5f;
-  const float kMiuD = 1.0f;
-  const float kEpsilon = 0.80f;  // 0.25 [0, 1], 0.1
+  const float kMiuD = 0.5f;
+  const float kEpsilon = 0.50f;  // 0.25 [0, 1], 0.1
   const float kBuss = false;
 
   const glm::mat4 kModel = glm::mat4(1.0f);
@@ -52,11 +52,11 @@ class RigidBody {
 
   glm::mat3 GetInverseMassMatrix(glm::vec3 r);
 
-  bool IsInsideFrictionCone(glm::vec3 impulse);
+  bool IsInsideFrictionCone(glm::vec3 impulse, glm::vec3 n);
 
   float GetL2Norm(glm::vec3& v);
 
-  glm::vec3 GetImpulse(glm::vec3 point);
+  glm::vec3 GetImpulse(glm::vec3 point, float epsilon);
 
  public:
   RigidBody(float a, float b, float c, glm::vec3 initAngularVelocity);

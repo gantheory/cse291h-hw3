@@ -42,6 +42,7 @@ RigidBody::RigidBody(float a, float b, float c, glm::vec3 initAngularVelocity) {
   glGenVertexArrays(1, &VAO);
   glGenBuffers(1, &VBO_positions);
   glGenBuffers(1, &VBO_normals);
+  glGenBuffers(1, &EBO);
 }
 
 RigidBody::~RigidBody() {
@@ -98,7 +99,6 @@ void RigidBody::Draw(const glm::mat4& viewProjMtx, GLuint shader) {
   glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), 0);
 
   // Generate EBO, bind the EBO to the bound VAO and send the data
-  glGenBuffers(1, &EBO);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * indices.size(),
                indices.data(), GL_STATIC_DRAW);
@@ -137,23 +137,30 @@ void RigidBody::Update() {
     ApplyForce(gravity, position);
   }
 
-  float minY = 1e9;
-  int idx = -1;
   // Ground collision.
+  float minY = 1e9;
   for (size_t i = 0; i < originalPoints.size(); ++i) {
     auto& originalPoint = originalPoints[i];
     auto point = orientation * originalPoint + position;
     if (point.y <= kGround) {
       if (point.y < minY) {
-        idx = i;
+        // idx = i;
         minY = fmin(minY, point.y);
       }
     }
   }
 
+  std::vector<int> cand;
+  for (size_t i = 0; i < originalPoints.size(); ++i) {
+    auto& originalPoint = originalPoints[i];
+    auto point = orientation * originalPoint + position;
+    if (abs(point.y - minY) < 1e-6) cand.push_back(i);
+  }
+
   if (minY <= kGround) {
+    int idx = cand[0];
     glm::vec3 point = orientation * originalPoints[idx] + position;
-    glm::vec3 impulse = GetImpulse(point);
+    glm::vec3 impulse = GetImpulse(point, kEpsilon);
 
     glm::vec3 f = impulse / kTimestep;
     ApplyForce(f, point);
@@ -221,31 +228,31 @@ glm::mat3 RigidBody::GetInverseMassMatrix(glm::vec3 r) {
          GetHatOperator(r) * GetInverseThetaMatrix() * GetHatOperator(r);
 }
 
-bool RigidBody::IsInsideFrictionCone(glm::vec3 impulse) {
-  float tangent = std::sqrt(pow(impulse.x, 2) + pow(impulse.z, 2));
-  float normal = std::fabs(impulse.y);
-  return tangent <= kMiuS * normal;
+bool RigidBody::IsInsideFrictionCone(glm::vec3 impulse, glm::vec3 n) {
+  return glm::length(impulse - glm::dot(impulse, n) * n) <=
+         kMiuS * abs(glm::dot(impulse, n));
 }
 
 float RigidBody::GetL2Norm(glm::vec3& v) {
   return std::sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
 }
 
-glm::vec3 RigidBody::GetImpulse(glm::vec3 point) {
+glm::vec3 RigidBody::GetImpulse(glm::vec3 point, float epsilon) {
   glm::vec3 r = point - position;
   glm::vec3 n(0.f, 1.f, 0.f);
   glm::vec3 vr = momentum / mass + glm::cross(GetAngularVelocity(), r);
-  glm::vec3 vNorm = vr * n;
-  glm::vec3 vTan = vr - vNorm;
+  float vNorm = glm::dot(vr, n);
+  glm::vec3 vTan = vr - vNorm * n;
   glm::mat3 inverseM = GetInverseMassMatrix(r);
-  glm::vec3 vNormPrime = -kEpsilon * vNorm;
+  glm::vec3 vNormPrime = -epsilon * vNorm * n;
   glm::mat3 M = glm::inverse(inverseM);
   glm::vec3 impulse = M * (vNormPrime - vr);
 
-  if (!IsInsideFrictionCone(impulse)) {
-    glm::vec3 T = vTan / GetL2Norm(vTan);
-    glm::vec3 den = inverseM * (n - kMiuD * T);
-    impulse = -(kEpsilon + 1) * vNorm / den.y;
+  if (!IsInsideFrictionCone(impulse, n)) {
+    glm::vec3 T = vTan / glm::length(vTan);
+    float impulseNorm =
+        -(kEpsilon + 1) * vNorm / glm::dot(n, inverseM * (n - kMiuD * T));
+    impulse = impulseNorm * n - kMiuD * impulseNorm * T;
   }
   return impulse;
 }
