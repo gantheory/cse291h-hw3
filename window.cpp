@@ -159,7 +159,8 @@ void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action,
    */
   const float sideA = 1;
   const float sideB = 5;
-  const float w = 15;
+  const float sideC = 3;
+  const float w = 30;
 
   // Check for a key press.
   if (action == GLFW_PRESS) {
@@ -230,31 +231,31 @@ void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action,
         break;
 
       case GLFW_KEY_Z:
-        initializeObjects(sideB, sideB, sideA, glm::vec3(w, 0.f, 0.f));
+        initializeObjects(sideC, sideB, sideA, glm::vec3(w, 0.f, 0.f));
         break;
 
       case GLFW_KEY_X:
-        initializeObjects(sideB, sideB, sideA, glm::vec3(0.f, w, 0.f));
+        initializeObjects(sideC, sideB, sideA, glm::vec3(0.f, w, 0.f));
         break;
 
       case GLFW_KEY_C:
-        initializeObjects(sideB, sideB, sideA, glm::vec3(0.f, 0.f, w));
+        initializeObjects(sideC, sideB, sideA, glm::vec3(0.f, 0.f, w));
         break;
 
       case GLFW_KEY_V:
-        initializeObjects(sideB, sideB, sideA, glm::vec3(w, w, 0.f));
+        initializeObjects(sideC, sideB, sideA, glm::vec3(w, w, 0.f));
         break;
 
       case GLFW_KEY_B:
-        initializeObjects(sideB, sideB, sideA, glm::vec3(w, 0.f, w));
+        initializeObjects(sideC, sideB, sideA, glm::vec3(w, 0.f, w));
         break;
 
       case GLFW_KEY_N:
-        initializeObjects(sideB, sideB, sideA, glm::vec3(0.f, w, w));
+        initializeObjects(sideC, sideB, sideA, glm::vec3(0.f, w, w));
         break;
 
       case GLFW_KEY_M:
-        initializeObjects(sideB, sideB, sideA, glm::vec3(w, w, w));
+        initializeObjects(sideC, sideB, sideA, glm::vec3(w, w, w));
         break;
 
       default:

@@ -131,33 +131,24 @@ void RigidBody::Draw(const glm::mat4& viewProjMtx, GLuint shader) {
 void RigidBody::Update() {
   force = torque = glm::vec3(0.f);
 
-  if (position.y > kGround) {
-    glm::vec3 gravity(0.f);
-    gravity.y = -mass * kG;
-    ApplyForce(gravity, position);
-  }
+  ApplyForce(glm::vec3(0.f, -mass * kG, 0.f), position);
 
   // Ground collision.
   float minY = 1e9;
   for (size_t i = 0; i < originalPoints.size(); ++i) {
-    auto& originalPoint = originalPoints[i];
-    auto point = orientation * originalPoint + position;
-    if (point.y <= kGround) {
-      if (point.y < minY) {
-        // idx = i;
-        minY = fmin(minY, point.y);
-      }
-    }
+    glm::vec3& originalPoint = originalPoints[i];
+    glm::vec3 point = orientation * originalPoint + position;
+    if (point.y <= kGround) minY = fmin(minY, point.y);
   }
 
   std::vector<int> cand;
   for (size_t i = 0; i < originalPoints.size(); ++i) {
-    auto& originalPoint = originalPoints[i];
-    auto point = orientation * originalPoint + position;
+    glm::vec3& originalPoint = originalPoints[i];
+    glm::vec3 point = orientation * originalPoint + position;
     if (abs(point.y - minY) < 1e-6) cand.push_back(i);
   }
 
-  if (minY <= kGround) {
+  if (!cand.empty()) {
     int idx = cand[0];
     glm::vec3 point = orientation * originalPoints[idx] + position;
     glm::vec3 impulse = GetImpulse(point, kEpsilon);
