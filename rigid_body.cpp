@@ -131,30 +131,30 @@ void RigidBody::Draw(const glm::mat4& viewProjMtx, GLuint shader) {
 void RigidBody::Update() {
   force = torque = glm::vec3(0.f);
 
-  ApplyForce(glm::vec3(0.f, -mass * kG, 0.f), position);
+  momentum.y += -mass * kG * kTimestep;
 
   // Ground collision.
   float minY = 1e9;
   for (size_t i = 0; i < originalPoints.size(); ++i) {
     glm::vec3& originalPoint = originalPoints[i];
     glm::vec3 point = orientation * originalPoint + position;
-    if (point.y <= kGround) minY = fmin(minY, point.y);
+    glm::vec3 newPoint = GetNextPosition(point, kTimestep);
+    if (newPoint.y <= kGround) minY = fmin(minY, newPoint.y);
   }
 
   std::vector<int> cand;
   for (size_t i = 0; i < originalPoints.size(); ++i) {
     glm::vec3& originalPoint = originalPoints[i];
     glm::vec3 point = orientation * originalPoint + position;
-    if (abs(point.y - minY) < 1e-6) cand.push_back(i);
-  }
+    glm::vec3 newPoint = GetNextPosition(point, kTimestep);
+    if (abs(newPoint.y - minY) < 1e-6) {
+      glm::vec3 point = orientation * originalPoints[i] + position;
+      glm::vec3 impulse = GetImpulse(point, kEpsilon);
 
-  if (!cand.empty()) {
-    int idx = cand[0];
-    glm::vec3 point = orientation * originalPoints[idx] + position;
-    glm::vec3 impulse = GetImpulse(point, kEpsilon);
-
-    glm::vec3 f = impulse / kTimestep;
-    ApplyForce(f, point);
+      glm::vec3 f = impulse / kTimestep;
+      ApplyForce(f, point);
+      break;
+    }
   }
 
   Integrate(kTimestep);
@@ -246,4 +246,8 @@ glm::vec3 RigidBody::GetImpulse(glm::vec3 point, float epsilon) {
     impulse = impulseNorm * n - kMiuD * impulseNorm * T;
   }
   return impulse;
+}
+
+glm::vec3 RigidBody::GetNextPosition(glm::vec3 point, float timestep) {
+  return point + momentum / mass * timestep;
 }

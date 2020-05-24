@@ -22,7 +22,7 @@ class Window {
   // Act as Constructors and desctructors
   static bool initializeProgram();
   static bool initializeObjects(float a = 3, float b = 1, float c = 5,
-                                glm::vec3 angularVelocity = {100.f, 0.f, .1f});
+                                glm::vec3 angularVelocity = {87.f, 0.f, .1f});
   static void cleanUp();
 
   // for the Window

@@ -58,6 +58,8 @@ class RigidBody {
 
   glm::vec3 GetImpulse(glm::vec3 point, float epsilon);
 
+  glm::vec3 GetNextPosition(glm::vec3 point, float timestep);
+
  public:
   RigidBody(float a, float b, float c, glm::vec3 initAngularVelocity);
 
