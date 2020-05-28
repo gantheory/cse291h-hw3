@@ -1,9 +1,9 @@
-# cse291h-hw2
+# cse291h-hw3
 
 ## Usage
 
 ```
 $ brew install glfw glm
 $ make
-$ ./hw2
+$ ./hw3
 ```
